@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Weather Jankar App</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <style>
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+
+    body {
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: #0b1120;            /* minimal dark navy */
+      color: #e5e7eb;
+    }
+
+    .app {
+      width: 360px;
+      padding: 24px 22px 26px;
+      border-radius: 18px;
+      background: #020617;            /* flat dark card */
+      border: 1px solid #1e293b;
+      box-shadow: 0 16px 35px rgba(15, 23, 42, 0.8);
+    }
+
+    .heading {
+      font-size: 28px;
+      font-weight: 650;
+      letter-spacing: 0.1em;
+      text-transform: uppercase;
+      margin-bottom: 6px;
+    }
+
+    .subheading {
+      font-size: 12px;
+      color: #9ca3af;
+      margin-bottom: 18px;
+    }
+
+    .search-row {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .search-row input {
+      flex: 1;
+      padding: 10px 12px;
+      border-radius: 999px;
+      border: 1px solid #374151;
+      background: #020617;
+      color: #e5e7eb;
+      font-size: 14px;
+      outline: none;
+    }
+
+    .search-row input::placeholder {
+      color: #6b7280;
+    }
+
+    .search-row button {
+      border: none;
+      border-radius: 999px;
+      padding: 0 16px;
+      background: #22c55e;
+      color: #020617;
+      font-size: 13px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s ease, transform 0.1s ease, opacity 0.15s ease;
+    }
+
+    .search-row button:hover:not(:disabled) {
+      background: #16a34a;
+      transform: translateY(-1px);
+    }
+
+    .search-row button:disabled {
+      opacity: 0.6;
+      cursor: default;
+      transform: none;
+    }
+
+    .status {
+      min-height: 14px;
+      font-size: 11px;
+      margin-bottom: 10px;
+      transition: color 0.15s ease;
+    }
+
+    .status--info {
+      color: #93c5fd; /* blue */
+    }
+
+    .status--error {
+      color: #f97316; /* orange */
+    }
+
+    .status--success {
+      color: #6ee7b7; /* green */
+    }
+
+    .card {
+      display: none;
+      padding-top: 8px;
+      border-top: 1px solid #1f2937;
+    }
+
+    .top-row {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 10px;
+    }
+
+    .temp-main {
+      font-size: 40px;
+      font-weight: 600;
+    }
+
+    .city-name {
+      font-size: 15px;
+      margin-top: 4px;
+    }
+
+    .desc {
+      font-size: 12px;
+      color: #9ca3af;
+      text-transform: capitalize;
+    }
+
+    .icon-box img {
+      width: 70px;
+    }
+
+    .meta-row {
+      display: flex;
+      justify-content: space-between;
+      margin-top: 10px;
+      font-size: 12px;
+    }
+
+    .meta-item {
+      display: flex;
+      flex-direction: column;
+      gap: 2px;
+    }
+
+    .meta-label {
+      color: #6b7280;
+      font-size: 11px;
+    }
+
+    .meta-value {
+      font-size: 13px;
+      font-weight: 500;
+    }
+
+    .footer {
+      margin-top: 14px;
+      font-size: 10px;
+      color: #6b7280;
+      text-align: right;
+    }
+  </style>
+</head>
+<body>
+  <div class="app">
+    <div class="heading">Weather Jankar</div>
+    <div class="subheading">
+      Minimal live weather app using WeatherAPI · Search any city worldwide.
+    </div>
+
+    <div class="search-row">
+      <input id="cityInput" type="text" placeholder="Enter city name (e.g. London, Mumbai)" />
+      <button id="searchBtn" onclick="getWeather()">Search</button>
+    </div>
+
+    <div id="status" class="status"></div>
+
+    <div id="card" class="card">
+      <div class="top-row">
+        <div>
+          <div id="temp" class="temp-main">--°C</div>
+          <div id="city" class="city-name">City, Country</div>
+          <div id="desc" class="desc">Condition</div>
+        </div>
+        <div class="icon-box">
+          <img id="icon" src="" alt="icon" />
+        </div>
+      </div>
+
+      <div class="meta-row">
+        <div class="meta-item">
+          <span class="meta-label">Feels like</span>
+          <span id="feels" class="meta-value">--°C</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Humidity</span>
+          <span id="humidity" class="meta-value">--%</span>
+        </div>
+        <div class="meta-item">
+          <span class="meta-label">Wind</span>
+          <span id="wind" class="meta-value">-- km/h</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="footer">Powered by WeatherAPI.com</div>
+  </div>
+
+  <script>
+    // In a real production app this key should be kept secret
+const API_KEY = " "; //Your Whether api key
+
+  async function getWeather() {
+    const cityInput = document.getElementById("cityInput");
+    const status = document.getElementById("status");
+    const card = document.getElementById("card");
+
+    const city = cityInput.value.trim();
+
+    // 1) Empty input
+    if (!city) {
+      status.textContent = "Please enter a city name.";
+      card.style.display = "none";
+      return;
+    }
+
+    // UI reset + loading state
+    status.textContent = "Fetching weather...";
+    card.style.display = "none";
+
+    try {
+      const url =
+        `https://api.weatherapi.com/v1/current.json?key=${API_KEY}&q=${encodeURIComponent(
+          city
+        )}&aqi=yes`;
+
+      const res = await fetch(url);
+
+      // 2) Handle common API errors
+      if (res.status === 400 || res.status === 404) {
+        status.textContent = "City not found. Please check the spelling.";
+        return;
+      }
+
+      if (res.status === 401) {
+        status.textContent = "API key issue. Please contact support.";
+        return;
+      }
+
+      if (!res.ok) {
+        status.textContent = "Something went wrong on server. Try again later.";
+        return;
+      }
+
+      const data = await res.json();
+
+      // 3) Normal success flow
+      document.getElementById("temp").textContent =
+        Math.round(data.current.temp_c) + "°C";
+      document.getElementById("city").textContent =
+        data.location.name + ", " + data.location.country;
+      document.getElementById("desc").textContent =
+        data.current.condition.text;
+      document.getElementById("feels").textContent =
+        Math.round(data.current.feelslike_c) + "°C";
+      document.getElementById("humidity").textContent =
+        data.current.humidity + "%";
+      document.getElementById("wind").textContent =
+        data.current.wind_kph + " km/h";
+
+      let iconUrl = data.current.condition.icon;
+      if (iconUrl.startsWith("//")) {
+        iconUrl = "https:" + iconUrl;
+      }
+      document.getElementById("icon").src = iconUrl;
+
+      status.textContent = "";
+      card.style.display = "block";
+    } catch (err) {
+      console.error(err);
+      // 4) Network / unknown error
+      status.textContent = "Network error. Please check your internet.";
+      card.style.display = "none";
+    }
+  }
+  </script>
+</body>
+</html>
